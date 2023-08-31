@@ -49,10 +49,10 @@ ns.model = (function() {
                 $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
             })
         },
-        update: function(fname, lname) {
+        update: function(fname, lname, person_id) {
             let ajax_options = {
                 type: 'PUT',
-                url: 'api/people/' + lname,
+                url: 'api/people/' + person_id,
                 accepts: 'application/json',
                 contentType: 'application/json',
                 dataType: 'json',
@@ -69,10 +69,10 @@ ns.model = (function() {
                 $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
             })
         },
-        'delete': function(lname) {
+        'delete': function(person_id) {
             let ajax_options = {
                 type: 'DELETE',
-                url: 'api/people/' + lname,
+                url: 'api/people/' + person_id,
                 accepts: 'application/json',
                 contentType: 'plain/text'
             };
@@ -86,36 +86,38 @@ ns.model = (function() {
         }
     };
 }());
-
 // Create the view instance
 ns.view = (function() {
     'use strict';
 
-    let $fname = $('#fname'),
+    let $person_id = $('#person_id'),
+        $fname = $('#fname'),
         $lname = $('#lname');
 
     // return the API
     return {
         reset: function() {
+            $person_id.val('');
             $lname.val('');
             $fname.val('').focus();
         },
-        update_editor: function(fname, lname) {
+        update_editor: function(person_id, fname, lname) {
+            $person_id.val(person_id);
             $lname.val(lname);
             $fname.val(fname).focus();
         },
         build_table: function(people) {
-            let rows = ''
+            let rows = '';
 
             // clear the table
             $('.people table > tbody').empty();
 
             // did we get a people array?
             if (people) {
-                for (let i=0, l=people.length; i < l; i++) {
-                    rows += `<tr><td class="fname">${people[i].fname}</td><td class="lname">${people[i].lname}</td><td>${people[i].timestamp}</td></tr>`;
+                for (let i = 0, l = people.length; i < l; i++) {
+                    rows += `<tr><td class="person_id">${people[i].person_id}</td><td class="fname">${people[i].fname}</td><td class="lname">${people[i].lname}</td><td>${people[i].timestamp}</td></tr>`;
                 }
-                $('table > tbody').append(rows);
+                $('.people table > tbody').append(rows);
             }
         },
         error: function(error_msg) {
@@ -124,10 +126,10 @@ ns.view = (function() {
                 .css('visibility', 'visible');
             setTimeout(function() {
                 $('.error').css('visibility', 'hidden');
-            }, 3000)
+            }, 3000);
         }
     };
-}());
+})();
 
 // Create the controller
 ns.controller = (function(m, v) {
@@ -142,7 +144,7 @@ ns.controller = (function(m, v) {
     // Get the data from the model after the controller is done initializing
     setTimeout(function() {
         model.read();
-    }, 100)
+    }, 100);
 
     // Validate input
     function validate(fname, lname) {
@@ -157,47 +159,53 @@ ns.controller = (function(m, v) {
         e.preventDefault();
 
         if (validate(fname, lname)) {
-            model.create(fname, lname)
+            model.create(fname, lname);
         } else {
             alert('Problem with first or last name input');
         }
     });
 
     $('#update').click(function(e) {
-        let fname = $fname.val(),
+        let person_id = $person_id.val(),
+            fname = $fname.val(),
             lname = $lname.val();
 
         e.preventDefault();
 
         if (validate(fname, lname)) {
-            model.update(fname, lname)
+            model.update(person_id, fname, lname);
         } else {
             alert('Problem with first or last name input');
         }
-        e.preventDefault();
     });
 
     $('#delete').click(function(e) {
-        let lname = $lname.val();
+        let person_id = $person_id.val(),
+            lname = $lname.val();
 
         e.preventDefault();
 
         if (validate('placeholder', lname)) {
-            model.delete(lname)
+            model.delete(person_id);
         } else {
-            alert('Problem with first or last name input');
+            alert('Problem with last name input');
         }
-        e.preventDefault();
     });
 
     $('#reset').click(function() {
         view.reset();
-    })
+    });
 
     $('table > tbody').on('dblclick', 'tr', function(e) {
         let $target = $(e.target),
+            person_id,
             fname,
             lname;
+
+        person_id = $target
+            .parent()
+            .find('td.person_id')
+            .text();
 
         fname = $target
             .parent()
@@ -209,7 +217,7 @@ ns.controller = (function(m, v) {
             .find('td.lname')
             .text();
 
-        view.update_editor(fname, lname);
+        view.update_editor(person_id, fname, lname);
     });
 
     // Handle the model events
@@ -236,4 +244,3 @@ ns.controller = (function(m, v) {
         console.log(error_msg);
     })
 }(ns.model, ns.view));
-
