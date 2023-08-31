@@ -13,7 +13,7 @@ app = connex_app.app
 
 # Configure the SQLAlchemy part of the app instance
 app.config['SQLALCHEMY_ECHO'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:YUvsPxboEdTbcVmwIv6A@containers-us-west-153.railway.app:6929/railway'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:YUvsPxboEdTbcVmwIv6A@containers-us-west-153.railway.app:6929/railway'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Create the SQLAlchemy db instance
