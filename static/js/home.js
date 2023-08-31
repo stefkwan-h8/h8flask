@@ -1,136 +1,3 @@
-/*
- * JavaScript file for the application to demonstrate
- * using the API
- */
-
-// Create the namespace instance
-let ns = {};
-
-// Create the model instance
-ns.model = (function() {
-    'use strict';
-
-    let $event_pump = $('body');
-
-    // Return the API
-    return {
-        'read': function() {
-            let ajax_options = {
-                type: 'GET',
-                url: 'api/people',
-                accepts: 'application/json',
-                dataType: 'json'
-            };
-            $.ajax(ajax_options)
-            .done(function(data) {
-                $event_pump.trigger('model_read_success', [data]);
-            })
-            .fail(function(xhr, textStatus, errorThrown) {
-                $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
-            })
-        },
-        create: function(fname, lname) {
-            let ajax_options = {
-                type: 'POST',
-                url: 'api/people',
-                accepts: 'application/json',
-                contentType: 'application/json',
-                dataType: 'json',
-                data: JSON.stringify({
-                    'fname': fname,
-                    'lname': lname
-                })
-            };
-            $.ajax(ajax_options)
-            .done(function(data) {
-                $event_pump.trigger('model_create_success', [data]);
-            })
-            .fail(function(xhr, textStatus, errorThrown) {
-                $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
-            })
-        },
-        update: function(fname, lname, person_id) {
-            let ajax_options = {
-                type: 'PUT',
-                url: 'api/people/' + person_id,
-                accepts: 'application/json',
-                contentType: 'application/json',
-                dataType: 'json',
-                data: JSON.stringify({
-                    'fname': fname,
-                    'lname': lname
-                })
-            };
-            $.ajax(ajax_options)
-            .done(function(data) {
-                $event_pump.trigger('model_update_success', [data]);
-            })
-            .fail(function(xhr, textStatus, errorThrown) {
-                $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
-            })
-        },
-        'delete': function(person_id) {
-            let ajax_options = {
-                type: 'DELETE',
-                url: 'api/people/' + person_id,
-                accepts: 'application/json',
-                contentType: 'plain/text'
-            };
-            $.ajax(ajax_options)
-            .done(function(data) {
-                $event_pump.trigger('model_delete_success', [data]);
-            })
-            .fail(function(xhr, textStatus, errorThrown) {
-                $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
-            })
-        }
-    };
-}());
-// Create the view instance
-ns.view = (function() {
-    'use strict';
-
-    let $person_id = $('#person_id'),
-        $fname = $('#fname'),
-        $lname = $('#lname');
-
-    // return the API
-    return {
-        reset: function() {
-            $person_id.val('');
-            $lname.val('');
-            $fname.val('').focus();
-        },
-        update_editor: function(person_id, fname, lname) {
-            $person_id.val(person_id);
-            $lname.val(lname);
-            $fname.val(fname).focus();
-        },
-        build_table: function(people) {
-            let rows = '';
-
-            // clear the table
-            $('.people table > tbody').empty();
-
-            // did we get a people array?
-            if (people) {
-                for (let i = 0, l = people.length; i < l; i++) {
-                    rows += `<tr><td class="person_id">${people[i].person_id}</td><td class="fname">${people[i].fname}</td><td class="lname">${people[i].lname}</td><td>${people[i].timestamp}</td></tr>`;
-                }
-                $('.people table > tbody').append(rows);
-            }
-        },
-        error: function(error_msg) {
-            $('.error')
-                .text(error_msg)
-                .css('visibility', 'visible');
-            setTimeout(function() {
-                $('.error').css('visibility', 'hidden');
-            }, 3000);
-        }
-    };
-})();
-
 // Create the controller
 ns.controller = (function(m, v) {
     'use strict';
@@ -139,7 +6,8 @@ ns.controller = (function(m, v) {
         view = v,
         $event_pump = $('body'),
         $fname = $('#fname'),
-        $lname = $('#lname');
+        $lname = $('#lname'),
+        $person_id = $('#person_id'); // Added $person_id
 
     // Get the data from the model after the controller is done initializing
     setTimeout(function() {
@@ -166,30 +34,32 @@ ns.controller = (function(m, v) {
     });
 
     $('#update').click(function(e) {
-        let person_id = $person_id.val(),
+        let person_id = $person_id.val(), // Added person_id
             fname = $fname.val(),
             lname = $lname.val();
 
         e.preventDefault();
 
         if (validate(fname, lname)) {
-            model.update(person_id, fname, lname);
+            model.update(person_id, fname, lname); // Updated to include person_id
         } else {
             alert('Problem with first or last name input');
         }
+        e.preventDefault();
     });
 
     $('#delete').click(function(e) {
-        let person_id = $person_id.val(),
+        let person_id = $person_id.val(), // Added person_id
             lname = $lname.val();
 
         e.preventDefault();
 
         if (validate('placeholder', lname)) {
-            model.delete(person_id);
+            model.delete(person_id); // Updated to include person_id
         } else {
-            alert('Problem with last name input');
+            alert('Problem with first or last name input');
         }
+        e.preventDefault();
     });
 
     $('#reset').click(function() {
@@ -198,11 +68,11 @@ ns.controller = (function(m, v) {
 
     $('table > tbody').on('dblclick', 'tr', function(e) {
         let $target = $(e.target),
-            person_id,
+            person_id, // Added person_id
             fname,
             lname;
 
-        person_id = $target
+        person_id = $target // Added block for person_id
             .parent()
             .find('td.person_id')
             .text();
@@ -242,5 +112,5 @@ ns.controller = (function(m, v) {
         let error_msg = textStatus + ': ' + errorThrown + ' - ' + xhr.responseJSON.detail;
         view.error(error_msg);
         console.log(error_msg);
-    })
-}(ns.model, ns.view));
+    });
+})(ns.model, ns.view);
